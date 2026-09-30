@@ -1,0 +1,52 @@
+﻿Name:             pull-test
+Namespace:        lomax
+Priority:         0
+Service Account:  default
+Node:             a23a31463808/172.17.0.3
+Start Time:       Wed, 30 Sep 2026 00:45:14 -0400
+Labels:           run=pull-test
+Annotations:      <none>
+Status:           Running
+IP:               10.42.0.5
+IPs:
+  IP:  10.42.0.5
+Containers:
+  pull-test:
+    Container ID:   containerd://8c29e54fc832c69a90954215a947e96e920f3014adfc2da84e2d79266c729bcf
+    Image:          000000000000.dkr.ecr.us-east-1.localhost:4566/lomax-backend:5cb1d38
+    Image ID:       000000000000.dkr.ecr.us-east-1.localhost:4566/lomax-backend@sha256:19ade50a589fe7df389a57447a00c4a435deef4a0de621433e4dc28497948e79
+    Port:           <none>
+    Host Port:      <none>
+    State:          Running
+      Started:      Wed, 30 Sep 2026 00:45:22 -0400
+    Ready:          True
+    Restart Count:  0
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-bn48l (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True 
+  Initialized                 True 
+  Ready                       True 
+  ContainersReady             True 
+  PodScheduled                True 
+Volumes:
+  kube-api-access-bn48l:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    Optional:                false
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type    Reason     Age    From               Message
+  ----    ------     ----   ----               -------
+  Normal  Scheduled  3m53s  default-scheduler  Successfully assigned lomax/pull-test to a23a31463808
+  Normal  Pulling    3m53s  kubelet            spec.containers{pull-test}: Pulling image "000000000000.dkr.ecr.us-east-1.localhost:4566/lomax-backend:5cb1d38"
+  Normal  Pulled     3m46s  kubelet            spec.containers{pull-test}: Successfully pulled image "000000000000.dkr.ecr.us-east-1.localhost:4566/lomax-backend:5cb1d38" in 7.114s (7.114s including waiting). Image size: 60008799 bytes.
+  Normal  Created    3m46s  kubelet            spec.containers{pull-test}: Created container: pull-test
+  Normal  Started    3m46s  kubelet            spec.containers{pull-test}: Started container pull-test
