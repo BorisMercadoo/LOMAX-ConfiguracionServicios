@@ -9,3 +9,22 @@ services:
       - ./data:/app/data
     environment:
       FLOCI_STORAGE_MODE: hybrid
+
+  api:
+    build: ./api
+    container_name: lomax-api
+    ports:
+      - "3000:3000"
+    environment:
+      AWS_ENDPOINT_URL: http://floci:4566
+      DB_HOST: floci
+      DB_PORT: "7001"
+      DB_USER: admin
+      DB_PASSWORD: admin12345
+      DB_NAME: lomax
+      BUCKET_ORIGINALES: lomax-originales
+      BUCKET_MINIATURAS: lomax-miniaturas
+      TABLA_ATRIBUTOS: productos_atributos
+      LAMBDA_NAME: lomax-miniatura
+    depends_on:
+      - floci
