@@ -1,0 +1,60 @@
+﻿{
+    "Item": {
+        "producto_id": {
+            "S": "1"
+        },
+        "atributos": {
+            "M": {
+                "conexion": {
+                    "S": "USB"
+                },
+                "distribucion": {
+                    "S": "QWERTY"
+                }
+            }
+        },
+        "estado_procesamiento": {
+            "S": "PENDIENTE"
+        }
+    }
+}
+{
+    "Item": {
+        "producto_id": {
+            "S": "2"
+        },
+        "atributos": {
+            "M": {
+                "pulgadas": {
+                    "N": "27"
+                },
+                "resolucion": {
+                    "S": "1920x1080"
+                }
+            }
+        },
+        "estado_procesamiento": {
+            "S": "PENDIENTE"
+        }
+    }
+}
+{
+    "Item": {
+        "producto_id": {
+            "S": "5"
+        },
+        "atributos": {
+            "M": {
+                "conexion": {
+                    "S": "Bluetooth"
+                },
+                "distribucion": {
+                    "S": "QWERTY"
+                }
+            }
+        },
+        "estado_procesamiento": {
+            "S": "PENDIENTE"
+        }
+    }
+}

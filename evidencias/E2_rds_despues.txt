@@ -1,0 +1,7 @@
+﻿ producto_id | codigo  |       nombre        | precio |  estado   
+-------------+---------+---------------------+--------+-----------
+           1 | TEC-001 | Teclado mecanico K1 |  59.90 | PENDIENTE
+           2 | PAN-001 | Monitor 27 pulgadas | 289.00 | PENDIENTE
+           5 | TEC-002 | Teclado 2           |  40.00 | PENDIENTE
+(3 rows)
+
