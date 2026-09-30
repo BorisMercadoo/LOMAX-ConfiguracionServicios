@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lomax - Catalogo</title>
+<style>
+:root{--bg:#f5f6f8;--tx:#1d2330;--mut:#667085;--pri:#1f5eff;--err:#c0262d;--ok:#12805c;--bd:#e3e6ec}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--tx)}
+header{background:#fff;border-bottom:1px solid var(--bd);padding:12px 20px;display:flex;gap:16px;align-items:center;position:sticky;top:0;z-index:5}
+header b{font-size:18px;margin-right:10px}
+header a{color:var(--mut);text-decoration:none;font-weight:600;padding:6px 12px;border-radius:8px}
+header a.on{color:var(--pri);background:#eaf0ff}
+main{max-width:1100px;margin:0 auto;padding:20px}
+h2{margin:0 0 14px}
+.mut{color:var(--mut);font-weight:400}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px}
+.card{background:#fff;border:1px solid var(--bd);border-radius:12px;overflow:hidden;cursor:pointer}
+.card:hover{border-color:var(--pri)}
+.card img{width:100%;height:170px;object-fit:contain;background:#eef0f4;display:block}
+.card .in{padding:10px 12px}
+.price{color:var(--ok);font-weight:700;margin:4px 0}
+.tag{background:#eef0f4;border-radius:6px;padding:2px 8px;font-size:12px}
+.panel{background:#fff;border:1px solid var(--bd);border-radius:12px;padding:18px;margin-bottom:16px}
+label{display:block;font-weight:600;margin:12px 0 4px;font-size:14px}
+input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--bd);border-radius:8px;font:inherit}
+input.bad,select.bad,textarea.bad{border-color:var(--err)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.arow{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:6px}
+button{background:var(--pri);color:#fff;border:0;border-radius:8px;padding:9px 16px;font:inherit;font-weight:600;cursor:pointer}
+button.ghost{background:#eef0f4;color:var(--tx)}
+button:disabled{opacity:.5;cursor:not-allowed}
+.msg{padding:10px 12px;border-radius:8px;margin:10px 0;font-size:14px}
+.err{background:#fdecec;color:var(--err)}
+.ok{background:#e6f6ef;color:var(--ok)}
+.warn{background:#fff4e0;color:#8a5a00}
+.steps div{padding:3px 0;font-size:14px}
+pre{background:#101828;color:#d0d5dd;border-radius:8px;padding:10px;font-size:12px;overflow:auto;max-height:220px;white-space:pre-wrap}
+.det{display:grid;grid-template-columns:minmax(220px,340px) 1fr;gap:20px}
+.det img{width:100%;background:#eef0f4;border-radius:10px}
+table{border-collapse:collapse;width:100%}
+td,th{border-bottom:1px solid var(--bd);padding:7px 6px;text-align:left}
+footer{text-align:center;color:var(--mut);font-size:12px;padding:20px}
+@media(max-width:700px){.det,.row{grid-template-columns:1fr}}
+</style></head>
+<body>
+<header><b>Lomax</b><a href="#/catalogo">Catalogo</a><a href="#/registrar">Registrar producto</a></header>
+<main id="app"></main>
+<footer id="foot"></footer>
+<script>
+const API = '/api';
+const KEY = 'lomax_pendiente';
+const $ = (s) => document.querySelector(s);
+const app = $('#app');
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+async function call(method, url, opts) {
+  try {
+    const r = await fetch(API + url, Object.assign({ method: method }, opts || {}));
+    const txt = await r.text();
+    let data; try { data = JSON.parse(txt); } catch (e) { data = txt; }
+    return { status: r.status, data: data, inst: r.headers.get('X-Instance') };
+  } catch (e) {
+    return { status: 0, data: { error: 'No se pudo contactar la API' } };
+  }
+}
+function errTxt(r) {
+  const d = r.data || {};
+  let t = d.error || ('HTTP ' + r.status);
+  if (d.campos) t += ' (' + d.campos.join(', ') + ')';
+  if (d.paso_fallido) t += ' [paso fallido: ' + d.paso_fallido + ']';
+  if (d.detalle) t += ' - ' + d.detalle;
+  return t;
+}
+
+/* ---------- Catalogo ---------- */
+async function catalogo() {
+  app.innerHTML = '<p class="mut">Cargando catalogo...</p>';
+  const r = await call('GET', '/productos');
+  if (r.status !== 200) {
+    app.innerHTML = '<div class="msg err">No se pudo cargar el catalogo: ' + esc(errTxt(r)) + ' <button id="re">Reintentar</button></div>';
+    $('#re').onclick = catalogo; return;
+  }
+  const l = r.data;
+  app.innerHTML = '<h2>Catalogo <span class="mut">(' + l.length + ' productos publicados)</span></h2>' +
+    (l.length ? '<div class="grid">' + l.map((p) =>
+      '<div class="card" data-id="' + p.producto_id + '"><img loading="lazy" src="' + API + p.imagen_url + '" alt="">' +
+      '<div class="in"><b>' + esc(p.nombre) + '</b><div class="price">$ ' + Number(p.precio).toFixed(2) + '</div>' +
+      '<span class="tag">' + esc(p.categoria) + '</span></div></div>').join('') + '</div>'
+      : '<p>No hay productos publicados.</p>');
+}
+app.addEventListener('click', (e) => {
+  const c = e.target.closest('.card');
+  if (c) location.hash = '#/producto/' + c.dataset.id;
+});
+
+/* ---------- Detalle ---------- */
+async function detalle(id) {
+  app.innerHTML = '<p class="mut">Cargando...</p>';
+  const r = await call('GET', '/productos/' + id);
+  if (r.status === 404) { app.innerHTML = '<div class="msg err">El producto ' + esc(id) + ' no existe.</div>'; return; }
+  if (r.status !== 200) { app.innerHTML = '<div class="msg err">' + esc(errTxt(r)) + '</div>'; return; }
+  const p = r.data;
+  const attrs = Object.entries(p.atributos || {}).map(([k, v]) => '<tr><th>' + esc(k) + '</th><td>' + esc(v) + '</td></tr>').join('');
+  const pub = p.estado === 'PUBLICADO';
+  app.innerHTML = '<p><a href="#/catalogo">&larr; Volver al catalogo</a></p><div class="det"><div>' +
+    (pub ? '<img src="' + API + p.imagen_url + '" alt="">' : '<div class="msg warn">Sin miniatura disponible.</div>') +
+    '</div><div><h2>' + esc(p.nombre) + '</h2>' +
+    '<div class="price">$ ' + Number(p.precio).toFixed(2) + '</div>' +
+    '<p><span class="tag">' + esc(p.categoria) + '</span> <span class="tag">' + esc(p.estado) + '</span> <span class="tag">producto_id ' + p.producto_id + '</span></p>' +
+    '<p>' + esc(p.descripcion) + '</p><p class="mut">Codigo: ' + esc(p.codigo) + '</p>' +
+    '<h3>Atributos</h3><table>' + (attrs || '<tr><td>Sin atributos</td></tr>') + '</table>' +
+    (pub ? '' : '<div class="msg warn">Producto incompleto (estado ' + esc(p.estado) + ', procesamiento: ' + esc(p.estado_procesamiento) + ').' +
+      (p.error_procesamiento ? ' Error: ' + esc(p.error_procesamiento) : '') +
+      '</div><button id="rep">Reprocesar imagen guardada</button><div id="repmsg"></div>') +
+    '</div></div>';
+  if (!pub) $('#rep').onclick = async () => {
+    const x = await call('POST', '/productos/' + id + '/reprocesar');
+    if (x.status === 200) detalle(id);
+    else $('#repmsg').innerHTML = '<div class="msg err">' + esc(errTxt(x)) + '</div>';
+  };
+}
+
+/* ---------- Registrar ---------- */
+function attrRow(k, v) {
+  const d = document.createElement('div'); d.className = 'arow';
+  d.innerHTML = '<input class="ak" placeholder="atributo (ej. conexion)" value="' + esc(k || '') + '">' +
+    '<input class="av" placeholder="valor" value="' + esc(v || '') + '"><button type="button" class="ghost" title="Quitar">x</button>';
+  d.querySelector('button').onclick = () => d.remove();
+  $('#attrs').appendChild(d);
+}
+function preset() {
+  const n = ($('#categoria').selectedOptions[0] || {}).text || '';
+  $('#attrs').innerHTML = '';
+  const t = n.toLowerCase();
+  if (t.indexOf('teclad') >= 0) { attrRow('conexion'); attrRow('distribucion'); }
+  else if (t.indexOf('pantall') >= 0) { attrRow('pulgadas'); attrRow('resolucion'); }
+  else attrRow();
+}
+function log(m, u, r) {
+  const el = $('#log'); if (!el) return;
+  const body = typeof r.data === 'string' ? r.data : JSON.stringify(r.data);
+  el.textContent += m + ' /api' + u + ' -> HTTP ' + r.status + ' ' + body + '\n';
+  el.scrollTop = el.scrollHeight;
+}
+function estado(html) { $('#estado').innerHTML = html; }
+function pendiente() { return JSON.parse(localStorage.getItem(KEY) || 'null'); }
+
+function pintarPendiente() {
+  const p = pendiente(); const box = $('#pend');
+  if (!p) { box.innerHTML = ''; $('#enviar').disabled = false; return; }
+  $('#enviar').disabled = true;
+  box.innerHTML = '<div class="panel"><div class="msg warn"><b>Registro pendiente:</b> producto_id ' + p.id + ' (' + esc(p.codigo) + ') se guardo pero su imagen no se completo. ' +
+    'No aparece en el catalogo hasta completarlo.</div>' +
+    '<label>Elegir otra imagen (JPEG o PNG, max 5 MB)</label><input type="file" id="imagen2" accept="image/jpeg,image/png">' +
+    '<p><button id="rimg">Reintentar con esta imagen</button> <button id="rrep" class="ghost">Reprocesar imagen ya guardada</button> ' +
+    '<button id="rdesc" class="ghost">Descartar aviso</button></p><div id="pmsg"></div></div>';
+  $('#rimg').onclick = () => {
+    const f = $('#imagen2').files[0];
+    if (!f) { $('#pmsg').innerHTML = '<div class="msg err">Selecciona una imagen.</div>'; return; }
+    subir(p.id, f);
+  };
+  $('#rrep').onclick = async () => {
+    const r = await call('POST', '/productos/' + p.id + '/reprocesar'); log('POST', '/productos/' + p.id + '/reprocesar', r);
+    if (r.status === 200) exito(p.id); else $('#pmsg').innerHTML = '<div class="msg err">' + esc(errTxt(r)) + '</div>';
+  };
+  $('#rdesc').onclick = () => { localStorage.removeItem(KEY); pintarPendiente(); estado(''); };
+}
+function exito(id) {
+  localStorage.removeItem(KEY);
+  estado('<div class="msg ok">Producto publicado. <b>producto_id ' + id + '</b> &middot; <a href="#/producto/' + id + '">Ver detalle</a></div>');
+  $('#form').reset(); preset(); pintarPendiente();
+}
+async function subir(id, file) {
+  estado('<div class="steps"><div>&#10003; 1. Producto registrado (producto_id ' + id + ', PENDIENTE)</div><div>&#8987; 2. Subiendo imagen y generando miniatura...</div></div>');
+  const fd = new FormData(); fd.append('imagen', file);
+  const r = await call('POST', '/productos/' + id + '/imagen', { body: fd });
+  log('POST', '/productos/' + id + '/imagen', r);
+  if (r.status === 200) { exito(id); return; }
+  estado('<div class="steps"><div>&#10003; 1. Producto registrado (producto_id ' + id + ', PENDIENTE)</div><div>&#10007; 2. Imagen no completada</div></div>' +
+    '<div class="msg err">' + esc(errTxt(r)) + '. El producto sigue PENDIENTE y no aparece en el catalogo.</div>');
+  pintarPendiente();
+}
+async function enviar(ev) {
+  ev.preventDefault();
+  if (pendiente()) return;
+  document.querySelectorAll('.bad').forEach((x) => x.classList.remove('bad'));
+  const errs = [];
+  const bad = (sel, msg) => { $(sel).classList.add('bad'); errs.push(msg); };
+  const v = (s) => $(s).value.trim();
+  if (!v('#codigo') || v('#codigo').length > 40) bad('#codigo', 'Codigo obligatorio (max 40)');
+  if (!v('#nombre') || v('#nombre').length > 120) bad('#nombre', 'Nombre obligatorio (max 120)');
+  if (!v('#descripcion')) bad('#descripcion', 'Descripcion obligatoria');
+  const precio = Number(v('#precio'));
+  if (v('#precio') === '' || isNaN(precio) || precio < 0) bad('#precio', 'Precio debe ser un numero mayor o igual a 0');
+  if (!$('#categoria').value) bad('#categoria', 'Selecciona una categoria');
+  const atributos = {};
+  document.querySelectorAll('.arow').forEach((r) => {
+    const k = r.querySelector('.ak').value.trim(); const val = r.querySelector('.av').value.trim();
+    if (k && val !== '') atributos[k] = (!isNaN(Number(val))) ? Number(val) : val;
+  });
+  if (!Object.keys(atributos).length) errs.push('Agrega al menos un atributo con valor');
+  const file = $('#imagen').files[0];
+  if (!file) bad('#imagen', 'La fotografia es obligatoria');
+  else if (['image/jpeg', 'image/png'].indexOf(file.type) < 0) bad('#imagen', 'La fotografia debe ser JPEG o PNG');
+  else if (file.size > 5 * 1024 * 1024) bad('#imagen', 'La fotografia supera 5 MB');
+  if (errs.length) { estado('<div class="msg err"><b>Corrige:</b><br>' + errs.map(esc).join('<br>') + '</div>'); return; }
+
+  $('#enviar').disabled = true;
+  estado('<div class="steps"><div>&#8987; 1. Registrando producto...</div></div>');
+  const body = { codigo: v('#codigo'), nombre: v('#nombre'), descripcion: v('#descripcion'), precio: precio,
+                 categoria_id: Number($('#categoria').value), atributos: atributos };
+  const r = await call('POST', '/productos', { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  log('POST', '/productos', r);
+  if (r.status !== 201) {
+    estado('<div class="msg err">' + esc(errTxt(r)) + '. No se creo ningun producto.</div>');
+    $('#enviar').disabled = false; return;
+  }
+  localStorage.setItem(KEY, JSON.stringify({ id: r.data.producto_id, codigo: body.codigo }));
+  await subir(r.data.producto_id, file);
+}
+async function registrar() {
+  const rc = await call('GET', '/categorias');
+  const cats = rc.status === 200 ? rc.data : [];
+  app.innerHTML = '<h2>Registrar producto</h2><div id="pend"></div><div class="panel"><form id="form" novalidate>' +
+    (rc.status !== 200 ? '<div class="msg err">No se pudieron cargar las categorias: ' + esc(errTxt(rc)) + '</div>' : '') +
+    '<div class="row"><div><label>Codigo</label><input id="codigo"></div><div><label>Nombre</label><input id="nombre"></div></div>' +
+    '<label>Descripcion</label><textarea id="descripcion" rows="2"></textarea>' +
+    '<div class="row"><div><label>Precio</label><input id="precio" inputmode="decimal"></div>' +
+    '<div><label>Categoria</label><select id="categoria">' + cats.map((c) => '<option value="' + c.categoria_id + '">' + esc(c.nombre) + '</option>').join('') + '</select></div></div>' +
+    '<label>Atributos</label><div id="attrs"></div><button type="button" class="ghost" id="addattr">+ Atributo</button>' +
+    '<label>Fotografia (JPEG o PNG, max 5 MB)</label><input type="file" id="imagen" accept="image/jpeg,image/png">' +
+    '<p><button id="enviar" type="submit">Registrar producto</button></p></form><div id="estado"></div></div>' +
+    '<div class="panel"><b>Solicitudes HTTP</b><pre id="log"></pre></div>';
+  $('#categoria').onchange = preset; $('#addattr').onclick = () => attrRow();
+  $('#form').addEventListener('submit', enviar);
+  preset(); pintarPendiente();
+}
+
+/* ---------- Router ---------- */
+function route() {
+  const h = location.hash || '#/catalogo';
+  document.querySelectorAll('header a').forEach((a) => a.classList.toggle('on', h.indexOf(a.getAttribute('href')) === 0));
+  if (h.indexOf('#/producto/') === 0) return detalle(h.split('/')[2]);
+  if (h === '#/registrar') return registrar();
+  return catalogo();
+}
+window.addEventListener('hashchange', route);
+route();
+call('GET', '/health').then((r) => { if (r.status === 200) $('#foot').textContent = 'API atendida por la instancia ' + r.data.instancia; });
+</script></body></html>

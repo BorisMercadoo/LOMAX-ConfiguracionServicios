@@ -28,3 +28,18 @@ services:
       LAMBDA_NAME: lomax-miniatura
     depends_on:
       - floci
+
+  frontend:
+    build: ./frontend
+    container_name: lomax-frontend
+
+  proxy:
+    image: nginx:alpine
+    container_name: lomax-proxy
+    ports:
+      - "8080:80"
+    volumes:
+      - ./proxy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - api
+      - frontend
